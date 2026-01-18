@@ -1,0 +1,92 @@
+stages:
+  - compile
+  - build
+  - test
+  - deploy
+
+
+variables:
+  BACKEND_TAG: "${CI_REGISTRY_IMAGE}/backend:${CI_COMMIT_SHA}"
+  FRONTEND_TAG: "${CI_REGISTRY_IMAGE}/frontend:${CI_COMMIT_SHA}"
+
+compile_backend:
+  stage: compile
+  image: gradle:8.5.0-jdk21 
+  tags: ["docker"]
+  script:
+    - cd back-end && gradle bootJar
+  artifacts:
+    paths:
+      - back-end/build/libs/*.jar
+
+compile_frontend:
+  stage: compile
+  image: node:22.9.0-alpine
+  tags: ["docker"]
+  script:
+    - cd front-end
+    - npm ci --ignore-scripts --no-audit --no-fund --progress=false
+    - CI=false npm run build
+  artifacts:
+    paths:
+      - front-end/build
+
+build_and_push_backend:
+  stage: build
+  tags: ["docker"]
+  dependencies:
+    - compile_backend
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker build -t $BACKEND_TAG -f back-end/Dockerfile back-end
+    - docker push $BACKEND_TAG
+
+build_and_push_frontend:
+  stage: build
+  tags: ["docker"]
+  dependencies:
+    - compile_frontend
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - docker build -t $FRONTEND_TAG -f nginx/Dockerfile .
+    - docker push $FRONTEND_TAG
+
+test_compose:
+  stage: test
+  tags: ["dind"]
+  image: docker:24.0.5-cli
+  services:
+    - name: docker:24.0.5-dind
+      alias: docker
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: 1
+    DOCKER_CERT_PATH: "/certs/client"
+  script:
+    - ls -l /certs/client
+    - echo "$CI_REGISTRY_PASSWORD" | docker login $CI_REGISTRY -u $CI_REGISTRY_USER --password-stdin
+    - printf "BACKEND_TAG=%s\nFRONTEND_TAG=%s\n" "$BACKEND_TAG" "$FRONTEND_TAG" > .env.deploy
+    - mkdir -p nginx/certs
+    - cp "$NGINX_CRT" nginx/certs/server.crt
+    - cp "$NGINX_KEY" nginx/certs/server.key
+    - docker compose --env-file .env.deploy -f compose.production.yml pull
+    - docker compose --env-file .env.deploy -f compose.production.yml up -d 
+    - sleep 20
+    - docker compose -f compose.production.yml ps
+    - docker compose -f compose.production.yml down
+
+deploy_compose:
+  stage: deploy
+  tags: ["shell"]
+  script:
+    - mkdir -p nginx/certs
+    - cp "$NGINX_CRT" nginx/certs/server.crt
+    - cp "$NGINX_KEY" nginx/certs/server.key
+    - echo "$CI_REGISTRY_PASSWORD" | docker login "$CI_REGISTRY" -u "$CI_REGISTRY_USER" --password-stdin
+    - docker compose -f compose.production.yml pull
+    - docker compose -f compose.production.yml up -d
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+      
