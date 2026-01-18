@@ -1,0 +1,16 @@
+[Unit]
+Description=JavaApp Backend
+After=network.target
+
+[Service]
+EnvironmentFile=/opt/javaapp/backend/.env
+WorkingDirectory=/opt/javaapp/backend
+ExecStart=/usr/bin/java -jar /opt/javaapp/backend/app.jar
+User=www-data
+Group=www-data
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
+
