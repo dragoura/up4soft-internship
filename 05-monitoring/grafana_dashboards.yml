@@ -1,0 +1,8 @@
+---
+used_dashboards:
+  - "1860": Node Exporter
+  - "4701": JVM (Micrometer)
+  - "5373": Micrometer Spring Throughput
+  - "9628": PostgreSQL Database
+  - "14282": Cadvisor exporter
+
