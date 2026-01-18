@@ -1,0 +1,15 @@
+[Unit]
+Description=JavaApp Backend
+After=network.target
+
+[Service]
+EnvironmentFile={{ javaapp_backend_dir }}/.env
+WorkingDirectory={{ javaapp_backend_dir }}
+ExecStart=/usr/bin/java -jar {{ javaapp_backend_dir }}/app.jar
+User={{ javaapp_user }}
+Group={{ javaapp_group }}
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

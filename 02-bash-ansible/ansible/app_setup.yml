@@ -1,0 +1,42 @@
+---
+- name: Install and configure Postgres
+  hosts: workers
+  become: true
+  gather_facts: yes   
+  roles:
+    - 03_setup_postgresql
+
+- name: Install and configure Redis
+  hosts: workers
+  become: true
+  gather_facts: no   
+  roles:
+    - 04_install_redis
+
+# - name: Install Nginx, add app.conf
+#   hosts: workers
+#   become: true
+#   gather_facts: no   
+#   roles:
+#     - 05_setup_nginx
+
+- name: Install Nginx, configure SSL certificates, add app.conf
+  hosts: workers
+  become: true
+  gather_facts: no   
+  roles:
+    - 05_setup_nginx_ssl
+
+- name: Install backend dependencies and build backend
+  hosts: workers
+  become: true
+  gather_facts: no   
+  roles:
+    - 06_setup_backend
+
+- name: Install frontend dependencies and build frontend
+  hosts: workers
+  become: true
+  gather_facts: no   
+  roles:
+    - 07_setup_frontend

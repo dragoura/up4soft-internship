@@ -1,0 +1,6 @@
+---
+- name: Install PostgreSQL packages
+  ansible.builtin.include_tasks: install.yml
+
+- name: Create PostgreSQL user and database
+  ansible.builtin.include_tasks: user_and_db.yml

@@ -1,0 +1,40 @@
+---
+- name: Ensure backend app directory exists for systemd unit
+  ansible.builtin.file:
+    path: "{{ javaapp_backend_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write backend .env
+  ansible.builtin.template:
+    src: backend.env.j2
+    dest: "{{ javaapp_backend_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Copy application JAR to target
+  ansible.builtin.copy:
+    src: "{{ backend_project_dir }}/build/libs/{{ backend_jar_name }}"
+    dest: "{{ javaapp_backend_dir }}/app.jar"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Install systemd unit for backend
+  ansible.builtin.template:
+    src: javaapp-backend.service.j2
+    dest: /etc/systemd/system/{{ javaapp_service_name }}.service
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable and start backend service
+  ansible.builtin.systemd:
+    name: "{{ javaapp_service_name }}"
+    enabled: yes
+    state: started
+    daemon_reload: yes

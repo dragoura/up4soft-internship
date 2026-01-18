@@ -1,0 +1,35 @@
+---
+- name: Install prerequisites for NVM/Node.js
+  ansible.builtin.apt:
+    update_cache: yes
+    name:
+      - curl
+      - ca-certificates
+    state: present
+
+- name: Install NVM
+  become: false
+  ansible.builtin.shell: |
+    set -euo pipefail
+    export PROFILE="/home/{{ ansible_user | default(home_dir) }}/.bashrc"
+    curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+  args:
+    executable: /bin/bash
+    creates: "{{ home_dir }}/.nvm/nvm.sh"
+
+- name: Install Node {{ node_version }} via NVM and set default
+  become: false
+  ansible.builtin.shell: |
+    set -euo pipefail
+    . "{{ home_dir }}/.nvm/nvm.sh"
+    nvm install "{{ node_version }}"
+    nvm alias default "{{ node_version }}"
+  args:
+    executable: /bin/bash
+
+# - name: Install npm version {{ npm_version }}
+#   become: false
+#   ansible.builtin.shell: |
+#     npm install -g npm@{{ npm_version }}
+#   args:
+#     executable: /bin/bash

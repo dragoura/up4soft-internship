@@ -1,0 +1,41 @@
+---
+- name: Install Nginx and Certbot
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes
+
+- name: Ensure Let's Encrypt webroot exists
+  ansible.builtin.file:
+    path: "{{ letsencrypt_webroot }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Ensure Nginx web root exists
+  ansible.builtin.file:
+    path: "{{ nginx_web_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Ensure ACME challenge directory exists
+  ansible.builtin.file:
+    path: "{{ letsencrypt_webroot }}/.well-known/acme-challenge"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Ensure Nginx is started and enabled
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: yes
+
+

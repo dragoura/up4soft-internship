@@ -1,0 +1,7 @@
+PubkeyAuthentication yes
+PasswordAuthentication no
+PermitEmptyPasswords no
+KbdInteractiveAuthentication no
+UsePAM no
+AuthorizedKeysFile %h/.ssh/authorized_keys
+AllowUsers {{ ssh_allow_users | join(' ') }}

@@ -1,0 +1,19 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install PostgreSQL and contrib packages
+  ansible.builtin.apt:
+    name: 
+      - acl
+      - postgresql
+      - postgresql-contrib
+      - python3-psycopg2 
+    state: present
+
+- name: Ensure PostgreSQL service is running and enabled
+  ansible.builtin.systemd:
+    name: postgresql
+    state: started
+    enabled: yes

@@ -1,0 +1,21 @@
+---
+- name: Ensure backend app directory exists
+  ansible.builtin.file:
+    path: "{{ backend_project_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write backend .env
+  ansible.builtin.template:
+    src: backend.env.j2
+    dest: "{{ backend_project_dir }}/.env"
+    owner: root
+    group: root
+    mode: "0640"
+
+- name: Build backend bootJar
+  ansible.builtin.command: gradle bootJar
+  args:
+    chdir: "{{ backend_project_dir }}"

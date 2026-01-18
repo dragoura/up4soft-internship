@@ -1,0 +1,28 @@
+---
+- name: Create PostgreSQL user
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    state: present
+    role_attr_flags: "LOGIN"
+
+- name: Create PostgreSQL database
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_db:
+    name: "{{ db_name }}"
+    state: present
+    owner: "{{ db_user }}" 
+
+- name: Grant ALL on schema public to role
+  become: true
+  become_user: postgres
+  community.postgresql.postgresql_privs:
+    database: "{{ db_name }}"
+    type: schema
+    objs: public
+    roles: "{{ db_user }}"
+    privs: ALL
+    state: present

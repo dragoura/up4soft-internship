@@ -1,0 +1,3 @@
+db_name: java_db
+db_user: java_user
+db_password: "{{ vault_db_password }}"

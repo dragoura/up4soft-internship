@@ -1,0 +1,9 @@
+---
+- name: Install Nginx and Certbot
+  ansible.builtin.apt:
+    name:
+      - nginx
+      - certbot
+      - python3-certbot-nginx
+    state: present
+    update_cache: yes

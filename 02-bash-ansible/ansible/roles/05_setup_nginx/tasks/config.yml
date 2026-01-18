@@ -1,0 +1,24 @@
+---
+- name: Install Nginx site config
+  ansible.builtin.copy:
+    src: "{{ site_config_name }}"
+    dest: "/etc/nginx/sites-available/{{ site_config_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+
+- name: Enable site by symlink
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ site_config_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ site_config_name }}"
+    state: link
+
+- name: Remove default site if present
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Nginx config test
+  ansible.builtin.command: nginx -t
+  changed_when: false
+  notify: Reload Nginx

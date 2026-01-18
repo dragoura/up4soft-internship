@@ -1,0 +1,6 @@
+---
+- name: Install Nginx and Certbot
+  ansible.builtin.include_tasks: install.yml
+
+- name: Create Nginx site config
+  ansible.builtin.include_tasks: config.yml

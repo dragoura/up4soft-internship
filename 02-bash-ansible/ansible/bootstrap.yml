@@ -1,0 +1,21 @@
+---
+- name: Setup new sudo user if not exists
+  hosts: workers
+  gather_facts: no 
+  roles:
+    - role: 00_security_bootstrap
+      vars:
+        ansible_user: root
+
+- name: Configure UFW
+  hosts: workers
+  become: true
+  gather_facts: no   
+  roles:
+    - 02_security_ufw
+
+- name: SSH hardening
+  hosts: workers
+  gather_facts: no   
+  roles:
+    - 01_security_ssh_hardening

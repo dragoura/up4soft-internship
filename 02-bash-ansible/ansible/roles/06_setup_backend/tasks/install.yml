@@ -1,0 +1,37 @@
+---
+- name: Install Git, OpenJDK and unzip
+  ansible.builtin.apt:
+    update_cache: yes
+    name:
+      - git
+      - "{{ openjdk_package }}"
+      - unzip
+    state: present
+
+- name: Create Gradle install directory
+  ansible.builtin.file:
+    path: "{{ gradle_install_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Download Gradle {{ gradle_version }}
+  ansible.builtin.get_url:
+    url: "{{ gradle_download_url }}"
+    dest: "/tmp/gradle-{{ gradle_version }}-bin.zip"
+    mode: "0644"
+
+- name: Unarchive Gradle {{ gradle_version }}
+  ansible.builtin.unarchive:
+    src: "/tmp/gradle-{{ gradle_version }}-bin.zip"
+    dest: "{{ gradle_install_dir }}"
+    remote_src: true
+    creates: "{{ gradle_install_dir }}/gradle-{{ gradle_version }}"
+
+- name: Symlink gradle to /usr/local/bin
+  ansible.builtin.file:
+    src: "{{ gradle_install_dir }}/gradle-{{ gradle_version }}/bin/gradle"
+    dest: /usr/local/bin/gradle
+    state: link
+    force: true

@@ -1,0 +1,6 @@
+---
+- name: Install prerequisites for NVM/Node.js
+  ansible.builtin.include_tasks: install.yml
+
+- name: Build frontend application
+  ansible.builtin.include_tasks: build.yml

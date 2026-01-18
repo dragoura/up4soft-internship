@@ -1,0 +1,12 @@
+---
+- name: Install Git, OpenJDK and Gradle
+  ansible.builtin.include_tasks: install.yml
+
+- name: Clone repository
+  ansible.builtin.include_tasks: git_clone.yml
+
+- name: Build backend bootJar
+  ansible.builtin.include_tasks: local_build.yml
+
+- name: Build systemd unit for backend
+  ansible.builtin.include_tasks: systemd_unit_build.yml

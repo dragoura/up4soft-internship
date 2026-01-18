@@ -1,0 +1,7 @@
+---
+node_version: "22.9.0"
+npm_version: "10.8.3"
+home_dir: "/home/{{ ansible_user }}"
+frontend_project_dir: "{{ home_dir }}/Java-app/front-end"
+react_app_api_base_url: "https://ansible.julia-b.work"
+nginx_web_root: "/var/www/javaapp"

@@ -1,0 +1,14 @@
+- name: Install hardened SSH snippet
+  ansible.builtin.template:
+    src: 99-ansible-conf.j2
+    dest: /etc/ssh/sshd_config.d/99-ansible.conf
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Validate sshd configuration
+  become: true
+  ansible.builtin.command: sshd -t
+  changed_when: false
+  notify: Reload sshd

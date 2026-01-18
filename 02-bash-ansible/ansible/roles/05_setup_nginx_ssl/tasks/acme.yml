@@ -1,0 +1,73 @@
+---
+- name: Install temporary ACME HTTP site config
+  ansible.builtin.template:
+    src: acme.conf.j2
+    dest: "/etc/nginx/sites-available/{{ site_name }}-acme"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload Nginx
+
+- name: Enable ACME site by symlink
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ site_name }}-acme"
+    dest: "/etc/nginx/sites-enabled/{{ site_name }}"
+    state: link
+    force: yes
+  notify: Reload Nginx
+
+- name: Remove default site if present
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  notify: Reload Nginx
+
+- name: Nginx config test (ACME)
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+
+- name: Remove legacy HTTP site symlink if present
+  ansible.builtin.file:
+    path: "/etc/nginx/sites-enabled/{{ site_name }}.http.conf"
+    state: absent
+  notify: Reload Nginx
+
+- name: Remove legacy HTTP site file if present
+  ansible.builtin.file:
+    path: "/etc/nginx/sites-available/{{ site_name }}.http.conf"
+    state: absent
+  notify: Reload Nginx
+
+- name: Apply Nginx reloads before cert issuance
+  ansible.builtin.meta: flush_handlers
+
+
+- name: Create ACME webroot smoke test file
+  ansible.builtin.copy:
+    dest: "{{ letsencrypt_webroot }}/.well-known/acme-challenge/ansible-test.txt"
+    content: "ok"
+    owner: www-data
+    group: www-data
+    mode: "0644"
+
+- name: Verify ACME path is publicly served by Nginx
+  ansible.builtin.uri:
+    url: "http://127.0.0.1/.well-known/acme-challenge/ansible-test.txt"
+    return_content: yes
+    headers:
+      Host: "{{ site_name }}"
+  register: acme_smoke
+  failed_when: acme_smoke.status != 200 or (acme_smoke.content | trim) != "ok"
+
+- name: Verify ACME path via public DNS
+  ansible.builtin.uri:
+    url: "http://{{ site_name }}/.well-known/acme-challenge/ansible-test.txt"
+    return_content: yes
+  register: acme_smoke_public
+  failed_when: acme_smoke_public.status != 200 or (acme_smoke_public.content | trim) != "ok"
+
+- name: Clean up ACME webroot smoke test file
+  ansible.builtin.file:
+    path: "{{ letsencrypt_webroot }}/.well-known/acme-challenge/ansible-test.txt"
+    state: absent

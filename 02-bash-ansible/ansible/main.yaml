@@ -1,0 +1,3 @@
+---
+- ansible.builtin.import_playbook: bootstrap.yml
+- ansible.builtin.import_playbook: app_setup.yml

@@ -1,0 +1,8 @@
+---
+site_name: ansible.julia-b.work
+certbot_email: "admin@{{ site_name }}"
+letsencrypt_webroot: /var/www/letsencrypt
+nginx_web_root: /var/www/javaapp
+redirect_http_to_https: true
+site_conf_ssl_src: ""
+proxy_api_upstream: "http://127.0.0.1:8080"

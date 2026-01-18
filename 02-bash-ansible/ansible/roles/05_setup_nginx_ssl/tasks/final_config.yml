@@ -1,0 +1,43 @@
+---
+- name: Check for custom SSL site config on remote
+  ansible.builtin.stat:
+    path: "{{ site_conf_ssl_src }}"
+  register: custom_ssl_conf_stat
+  when: site_conf_ssl_src | length > 0
+
+- name: Install custom SSL site config from remote
+  ansible.builtin.copy:
+    src: "{{ site_conf_ssl_src }}"
+    dest: "/etc/nginx/sites-available/{{ site_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+    remote_src: yes
+  when:
+    - site_conf_ssl_src | length > 0
+    - custom_ssl_conf_stat.stat.exists
+  notify: Reload Nginx
+
+- name: Install default SSL site config from template
+  ansible.builtin.template:
+    src: site_ssl.conf.j2
+    dest: "/etc/nginx/sites-available/{{ site_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: not (site_conf_ssl_src | length > 0 and custom_ssl_conf_stat.stat.exists)
+  notify: Reload Nginx
+
+- name: Enable final site by symlink
+  ansible.builtin.file:
+    src: "/etc/nginx/sites-available/{{ site_name }}"
+    dest: "/etc/nginx/sites-enabled/{{ site_name }}"
+    state: link
+    force: yes
+  notify: Reload Nginx
+
+- name: Nginx config test (final)
+  ansible.builtin.command: nginx -t
+  changed_when: false
+
+

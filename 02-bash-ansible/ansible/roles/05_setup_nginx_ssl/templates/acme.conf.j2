@@ -1,0 +1,17 @@
+server {
+    listen 80;
+    server_name {{ site_name }};
+
+    location /.well-known/acme-challenge/ {
+        alias {{ letsencrypt_webroot }}/.well-known/acme-challenge/;
+        default_type "text/plain";
+        try_files $uri =404;
+    }
+
+    # Minimal handler for any other path during issuance
+    location / {
+        return 404;
+    }
+}
+
+

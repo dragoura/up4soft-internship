@@ -1,0 +1,67 @@
+---
+- name: Ensure frontend .env exists with API base URL
+  ansible.builtin.template:
+    src: frontend.env.j2
+    dest: "{{ frontend_project_dir }}/.env"
+    mode: "0644"
+
+- name: Check if package-lock.json exists
+  ansible.builtin.stat:
+    path: "{{ frontend_project_dir }}/package-lock.json"
+  register: frontend_lock
+
+- name: Install frontend dependencies (npm ci)
+  ansible.builtin.shell: |
+    . "{{ home_dir }}/.nvm/nvm.sh"
+    npm ci
+  args:
+    chdir: "{{ frontend_project_dir }}"
+    executable: /bin/bash
+  when: frontend_lock.stat.exists
+
+- name: Install frontend dependencies (npm install)
+  ansible.builtin.shell: |
+    . "{{ home_dir }}/.nvm/nvm.sh"
+    npm install
+  args:
+    chdir: "{{ frontend_project_dir }}"
+    executable: /bin/bash
+  when: not frontend_lock.stat.exists
+
+- name: Build frontend
+  ansible.builtin.shell: |
+    . "{{ home_dir }}/.nvm/nvm.sh"
+    npm run build
+  args:
+    chdir: "{{ frontend_project_dir }}"
+    executable: /bin/bash
+
+- name: Ensure nginx web root exists
+  become: true
+  ansible.builtin.file:
+    path: "{{ nginx_web_root }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: "0755"
+
+- name: Remove existing frontend build from web root
+  become: true
+  ansible.builtin.file:
+    path: "{{ nginx_web_root }}/build"
+    state: absent
+
+- name: Deploy new frontend build to web root
+  become: true
+  ansible.builtin.command: cp -a "{{ frontend_project_dir }}/build" "{{ nginx_web_root }}/build"
+  notify:
+    - Reload Nginx
+
+- name: Set ownership on deployed build
+  become: true
+  ansible.builtin.file:
+    path: "{{ nginx_web_root }}/build"
+    state: directory
+    recurse: true
+    owner: www-data
+    group: www-data

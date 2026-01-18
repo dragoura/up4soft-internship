@@ -1,0 +1,17 @@
+---
+- name: Check if certificate already exists
+  ansible.builtin.stat:
+    path: "/etc/letsencrypt/live/{{ site_name }}/fullchain.pem"
+  register: cert_stat
+
+- name: Obtain certificate via webroot
+  ansible.builtin.command: >
+    certbot certonly --webroot -w "{{ letsencrypt_webroot }}"
+    -d "{{ site_name }}"
+    --non-interactive --agree-tos
+    -m "{{ certbot_email }}" --keep-until-expiring
+  args:
+    creates: "/etc/letsencrypt/live/{{ site_name }}/fullchain.pem"
+  when: not cert_stat.stat.exists
+
+

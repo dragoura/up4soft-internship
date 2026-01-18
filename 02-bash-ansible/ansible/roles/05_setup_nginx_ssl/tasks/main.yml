@@ -1,0 +1,14 @@
+---
+- name: Install prerequisites
+  ansible.builtin.include_tasks: install.yml
+
+- name: Stage ACME HTTP config
+  ansible.builtin.include_tasks: acme.yml
+
+- name: Obtain certificate via certbot
+  ansible.builtin.include_tasks: certbot.yml
+
+- name: Install final SSL config
+  ansible.builtin.include_tasks: final_config.yml
+
+

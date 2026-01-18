@@ -1,0 +1,14 @@
+- name: Update apt cache 
+  ansible.builtin.apt:
+    update_cache: yes
+
+- name: Install Redis server
+  ansible.builtin.apt:
+    name: redis-server
+    state: present
+
+- name: Start and enable Redis service
+  ansible.builtin.service:
+    name: redis-server
+    state: started
+    enabled: yes

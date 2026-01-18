@@ -1,0 +1,22 @@
+---
+- name: Create the non-root user
+  ansible.builtin.user:
+    name: "{{ new_user_name }}"
+    shell: /bin/bash
+    groups: "{{ new_user_groups | default('sudo') }}" 
+    state: present
+
+- name: Add SSH public key for the new user 
+  ansible.posix.authorized_key:
+    user: "{{ new_user_name }}"
+    state: present
+    key: "{{ lookup('file', new_user_ssh_public_key_path) }}" 
+
+- name: Configure passwordless sudo for the new user 
+  ansible.builtin.lineinfile:
+    path: /etc/sudoers.d/{{ new_user_name }}
+    create: yes
+    mode: '0440'
+    line: "{{ new_user_name }} ALL=(ALL) NOPASSWD: ALL"
+    validate: /usr/sbin/visudo -cf %s
+  when: enable_passwordless_sudo | default(false)

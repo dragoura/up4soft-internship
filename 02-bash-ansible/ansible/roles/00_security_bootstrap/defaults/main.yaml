@@ -1,0 +1,5 @@
+---
+new_user_name: "julia"
+new_user_groups: "sudo" 
+new_user_ssh_public_key_path: "/Users/yuliya/.ssh/id_ed25519_droplet.pub" 
+enable_passwordless_sudo: true 

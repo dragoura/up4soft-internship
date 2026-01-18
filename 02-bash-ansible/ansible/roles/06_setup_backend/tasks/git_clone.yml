@@ -1,0 +1,32 @@
+---
+- name: Ensure ~/.ssh exists
+  become: false
+  ansible.builtin.file:
+    path: "{{ home_dir }}/.ssh"
+    state: directory
+    mode: '0700'
+
+- name: Install deploy key
+  become: false
+  ansible.builtin.copy:
+    src: "{{ backend_repo_deploy_key_private_path }}"
+    dest: "{{ home_dir }}/.ssh/id_ed25519"
+    mode: '0600'
+
+- name: Check if repo exists
+  become: false
+  ansible.builtin.stat:
+    path: "{{ home_dir }}/Java-app/.git"
+  register: repo_git_dir
+
+- name: Clone backend (private repo via SSH)
+  become: false
+  ansible.builtin.git:
+    repo: "git@github.com:Up4Soft-LLC/Java-app.git"
+    dest: "{{ home_dir  }}/Java-app"
+    version: "main"
+    key_file: "{{ home_dir  }}/.ssh/id_ed25519"
+    accept_hostkey: yes
+    update: no
+  when: not repo_git_dir.stat.exists
+ 

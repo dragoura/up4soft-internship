@@ -1,0 +1,33 @@
+openjdk_version: 21
+gradle_version: 8.5
+openjdk_package: "openjdk-{{ openjdk_version }}-jdk"
+gradle_install_dir: /opt/gradle
+gradle_download_url: "https://services.gradle.org/distributions/gradle-{{ gradle_version }}-bin.zip"
+
+backend_repo_url: "git@github.com:Up4Soft-LLC/Java-app.git"
+backend_repo_deploy_key_private_path: "~/.ssh/id_ed25519_gitdeploy"
+backend_repo_version: "main"
+home_dir: "/home/{{ ansible_user }}"
+backend_project_dir: "{{ home_dir  }}/Java-app/back-end"
+backend_jar_name: "ci-back-end-0.0.1-SNAPSHOT.jar"
+
+
+javaapp_service_name: javaapp
+javaapp_backend_dir: /opt/javaapp
+javaapp_user: www-data
+javaapp_group: www-data
+
+server_port: 8080
+postgres_host: 127.0.0.1
+postgres_port: 5432
+db_name: java_db
+db_user: java_user
+db_password: "{{ vault_db_password }}"
+
+redis_host: 127.0.0.1
+redis_port: 6379
+redis_password: ""
+fluentd_host: 127.0.0.1
+fluentd_port: 24224
+fluentd_enabled: "false"
+debug_enabled: "false"
