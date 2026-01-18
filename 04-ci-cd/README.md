@@ -5,7 +5,7 @@ Solution for **CI/CD** task: create pipeline for the **Java + React** app from t
 ### Requirements 
 
 - **GitLab**: deploy 1 local VM and run GitLab via `docker-compose` (with a private Docker Registry).
-- **Source code**: take the app from Java-app folder and push it into your GitLab repo via SSH.
+- **Source code**: take the app from https://github.com/Up4Soft-LLC/Java-app and push it into your GitLab repo via SSH.
 - **Runtime**: set up `docker`/`docker-compose` for the app on the VM (frontend + backend + PostgreSQL + Redis).
 - **Runners**: configure GitLab runners (docker and shell one) that listen to the GitLab repo.
 - **CI**: compile sources, build Docker images (frontend + backend), push them to the GitLab Registry.
