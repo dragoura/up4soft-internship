@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  schedule: "{{ .Values.schedule }}"
+  {{- with .Values.timeZone }}
+  timeZone: {{ . | quote }}
+  {{- end }}
+  suspend: {{ .Values.suspend }}
+  concurrencyPolicy: {{ .Values.job.concurrencyPolicy }}
+  successfulJobsHistoryLimit: {{ .Values.job.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.job.failedJobsHistoryLimit }}
+  startingDeadlineSeconds: {{ .Values.job.startingDeadlineSeconds }}
+  jobTemplate:
+    spec:
+      backoffLimit: {{ .Values.job.backoffLimit }}
+      template:
+        spec:
+          restartPolicy: {{ .Values.job.restartPolicy }}
+          containers:
+            - name: pg-dump
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["/bin/sh", "-c"]
+              args:
+                - |
+                  set -e
+                  DIR={{ .Values.storage.mountPath }}
+                  {{- if eq .Values.backup.format "custom" }}
+                  FILE="$DIR/{{ .Values.backup.prefix }}-$(date +%Y%m%d-%H%M%S).dump"
+                  pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -Fc -f "$FILE"
+                  {{- else }}
+                  FILE="$DIR/{{ .Values.backup.prefix }}-$(date +%Y%m%d-%H%M%S).sql"
+                  pg_dump -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE" -f "$FILE"
+                  {{- end }}
+                  echo "created: $(ls -lh "$FILE")"
+                  {{- if gt (int .Values.backup.keepLast) 0 }}
+                  cd "$DIR"
+                  ls -1t {{ .Values.backup.prefix }}-* 2>/dev/null \
+                    | tail -n +{{ add1 (int .Values.backup.keepLast) }} \
+                    | xargs -r rm -f
+                  echo "kept: $(ls -1 {{ .Values.backup.prefix }}-* | wc -l) files"
+                  {{- end }}
+              env:
+                - name: PGHOST
+                  value: {{ .Values.postgres.host | quote }}
+                - name: PGPORT
+                  value: {{ .Values.postgres.port | quote }}
+                - name: PGDATABASE
+                  value: {{ .Values.postgres.database | quote }}
+                - name: PGUSER
+                  value: {{ .Values.postgres.user | quote }}
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.postgres.existingSecret }}
+                      key: {{ .Values.postgres.passwordKey }}
+              volumeMounts:
+                - name: backup
+                  mountPath: {{ .Values.storage.mountPath }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+          volumes:
+            - name: backup
+              persistentVolumeClaim:
+                claimName: {{ .Values.storage.existingClaim | default .Release.Name }}

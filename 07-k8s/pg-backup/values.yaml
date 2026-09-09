@@ -1,0 +1,57 @@
+# --- schedule ---------------------------------------------------------------
+schedule: "*/5 * * * *"
+timeZone: ""                  # "Europe/Minsk"; empty = node UTC
+suspend: false                # true = pause without deleting the CronJob
+
+# --- job policy --------------------------------------------------------------
+job:
+  concurrencyPolicy: Forbid   # Allow | Forbid | Replace
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  backoffLimit: 2
+  restartPolicy: OnFailure    # Job allows only OnFailure and Never
+  startingDeadlineSeconds: 120
+
+# --- image -------------------------------------------------------------------
+image:
+  repository: postgres
+  tag: "17-alpine"            # major must be >= server, otherwise pg_dump refuses
+  pullPolicy: IfNotPresent
+
+# --- database connection -----------------------------------------------------
+postgres:
+  host: postgres-postgresql
+  port: 5432
+  database: java-db
+  user: java-user
+  existingSecret: postgres-secret
+  passwordKey: password
+
+# --- dump --------------------------------------------------------------------
+backup:
+  prefix: java-db             # java-db-20260909-134131.sql
+  format: plain               # plain | custom (custom = pg_dump -Fc, compressed)
+  keepLast: 24                
+
+# --- storage -----------------------------------------------------------------
+storage:
+  create: true                # PVC is created by this chart
+  existingClaim: ""           # or the name of an existing PVC
+  size: 2Gi
+  accessMode: ReadWriteOnce
+  mountPath: /backup
+  className: local-path-retain
+
+storageClass:
+  create: true                # cluster-scoped: disable if it already exists
+  name: local-path-retain
+  provisioner: rancher.io/local-path
+  reclaimPolicy: Retain
+  volumeBindingMode: WaitForFirstConsumer
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    memory: 256Mi

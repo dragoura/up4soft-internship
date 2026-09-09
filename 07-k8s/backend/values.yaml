@@ -1,0 +1,36 @@
+replicaCount: 2
+
+image:
+  repository: java-app-backend
+  pullPolicy: IfNotPresent   
+
+service:
+  type: ClusterIP
+  port: 8080
+
+containerPort: 8080
+
+ingress:
+  enabled: true
+  className: nginx
+  host: javaapp.local
+  path: /api          
+  pathType: Prefix
+
+config:
+  POSTGRES_HOST: postgres-postgresql
+  POSTGRES_PORT: "5432"
+  POSTGRES_USER: java-user
+  POSTGRES_DB: java-db
+  REDIS_HOST: redis-master
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: ""
+  FLUENTD_ENABLED: "false"
+  FLUENTD_HOST: localhost
+  FLUENTD_PORT: "24224"
+  DEBUG: "true"
+
+# ссылка на уже существующий секрет
+postgres:
+  existingSecret: postgres-secret
+  passwordKey: password

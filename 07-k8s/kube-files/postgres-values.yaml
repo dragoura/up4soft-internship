@@ -1,0 +1,22 @@
+image:
+  repository: bitnamilegacy/postgresql
+  tag: "17.6.0"
+
+global:
+  postgresql:
+    auth:
+      existingSecret: "postgres-secret"
+      username: "java-user"
+      database: "java-db"
+
+primary:
+  persistence:
+    enabled: true
+    size: 10Gi
+  resources:
+    requests:
+      cpu: 100m           
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
