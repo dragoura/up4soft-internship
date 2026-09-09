@@ -39,7 +39,8 @@ made, and the gotchas that cost time. This README is the map.
   and `readonly-sa.yaml` (ServiceAccount → ClusterRole → ClusterRoleBinding).
 - **`backend/`**: chart for the Spring Boot service — Deployment, Service, ConfigMap for
   non-secret env vars; the password comes from an existing Secret via `secretKeyRef`; liveness,
-  readiness and startup probes pointed at the Actuator health groups.
+  readiness and startup probes pointed at the Actuator health groups; CPU/memory requests and a
+  HorizontalPodAutoscaler (1–5 replicas at 70% CPU) behind `autoscaling.enabled`.
 - **`frontend/`**: chart for nginx + the built React bundle. The nginx config is delivered as a
   ConfigMap and mounted with `subPath`; a `checksum/config` annotation restarts the Pod when the
   config changes.

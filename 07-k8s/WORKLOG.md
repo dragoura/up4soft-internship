@@ -494,3 +494,49 @@ kubectl get pv --sort-by=.status.phase \
 Anything `Released` is a candidate. Our case was worse: with both the PVC and the PV deleted,
 *nothing* points at that directory any more — it can only be found by walking the node's disk.
 Hence the rule: under `Retain`, delete the PV only after deciding what happens to the data.
+
+## Day 8 — Autoscaling
+
+### metrics-server
+
+```bash
+kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+kubectl -n kube-system patch deploy metrics-server --type=json \
+  -p='[{"op":"add","path":"/spec/template/spec/containers/0/args/-","value":"--kubelet-insecure-tls"}]'
+kubectl top pods
+```
+
+The patch is mandatory on kind: metrics-server verifies the kubelet's serving certificate and kind
+issues self-signed ones. Without it the Pod runs but never becomes Ready and `kubectl top` answers
+`Metrics API not available`.
+
+### Resources, and why there is no CPU limit
+
+```yaml
+resources:
+  requests: {cpu: 200m, memory: 512Mi}
+  limits:   {memory: 1Gi}
+```
+
+### HPA
+
+`backend/templates/hpa.yaml` (rendered only when `autoscaling.enabled`), plus a guard in the
+Deployment:
+
+```yaml
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+```
+
+Without that guard every `helm upgrade` resets the replica count the autoscaler chose, and the two
+fight forever — the same shape as Argo CD `selfHeal` fighting an HPA, with Helm as the other party.
+
+Load test:
+
+```bash
+kubectl run load --rm -it --image=busybox:1.36 --restart=Never -- \
+  /bin/sh -c 'while true; do wget -q -O- http://backend:8080/api/v1/posts >/dev/null; done'
+kubectl get hpa backend -w
+```
